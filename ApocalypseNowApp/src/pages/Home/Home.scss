@@ -1,0 +1,19 @@
+ion-card{
+    width: 100vw;
+}
+
+p{
+    text-transform: initial;
+}
+
+.login-box{
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    top: 85%;
+    margin-top: 15px;
+    ion-button{
+        width: 80%;
+    }
+}
