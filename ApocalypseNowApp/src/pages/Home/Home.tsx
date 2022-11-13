@@ -81,7 +81,7 @@ const Home: React.FC<RouteComponentProps> = (props) => {
                 <IonCardSubtitle>
                   <IonText>
                     <p>
-                      APIのIPAddressを入力して、LOGINボタンを押してください。APIサーバーに接続ができるか確認します。
+                      APIサーバーのIPアドレスを入力して、LOGINボタンを押してください。APIサーバーに接続ができるか確認します。
                     </p>
                   </IonText>
 

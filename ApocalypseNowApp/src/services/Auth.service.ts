@@ -1,3 +1,4 @@
+import axios from "axios";
 import { LogInModel } from "../models/LogIn.model";
 
 export const AuthService = () => {
@@ -8,8 +9,8 @@ export const AuthService = () => {
      * @returns 
      */
     const checkAPIAddress = async (loginModel: LogInModel): Promise<boolean> => {
-        // const response: Response = await fetch(loginModel.IPAddress);
-        // const json: any = response.json();
+        // const response = await axios.get(loginModel.IPAddress);
+        // const json: any = response.data;
         // return json?.ReturnCode !== undefined;
         return true;
     }
