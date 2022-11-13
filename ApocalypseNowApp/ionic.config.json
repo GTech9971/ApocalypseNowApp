@@ -1,0 +1,7 @@
+{
+  "name": "ApocalypseNowApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
