@@ -1,4 +1,5 @@
 export class APIUrl {
+    public static readonly AUTH: string = "/auth";
 
     /** すべてのサイトのidを取得するAPI */
     public static readonly FETCH_ALL_SITE_ID: string = "/fetch_all_target_site";

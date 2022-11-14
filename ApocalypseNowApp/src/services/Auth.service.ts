@@ -1,17 +1,19 @@
 import axios from "axios";
-import { LogInModel } from "../models/LogIn.model";
+import { APIUrl } from "../consts/APIUrl.const";
+import { BaseResponse } from "../data/Base.response";
+import { LogInData } from "../data/LogIn.data";
+
 
 export const AuthService = () => {
 
     /**
      * APIのIPAddressが合っているか確認する
-     * @param loginModel 
+     * @param loginData 
      * @returns 
      */
-    const checkAPIAddress = async (loginModel: LogInModel): Promise<boolean> => {
-        const response = await axios.get(loginModel.IPAddress + "/");
-        const json: any = response.data;
-        return json?.return_code === 0;
+    const checkAPIAddress = async (loginData: LogInData): Promise<BaseResponse> => {
+        const response: BaseResponse = (await axios.post<BaseResponse>(APIUrl.AUTH))?.data;
+        return response;
     }
 
     return { checkAPIAddress };

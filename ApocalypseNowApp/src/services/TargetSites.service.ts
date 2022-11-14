@@ -1,8 +1,14 @@
 import axios from "axios";
 import { APIUrl } from "../consts/APIUrl.const";
-import { LogInModel } from "../models/LogIn.model";
-import { TargetSiteModel } from "../models/TargetSite.model";
+import { FetchAllTargetSiteResponse } from "../data/FetchAllTargetSite.response";
+import { LogInData } from "../data/LogIn.data";
+import { TargetSiteData } from "../data/TargetSite.data";
+import { UploadOriginalTargetSiteResponse } from "../data/UploadOriginalTargetSite.response";
 
+/**
+ * ターゲットサイトAPIのサービス
+ * @returns 
+ */
 export const TargetSitesService = () => {
 
     const base64ToFile = (base64Str: string, name: string): File => {
@@ -17,49 +23,59 @@ export const TargetSitesService = () => {
 
     /**
      * TargetSiteの全てのIDを取得する
-     * @param loginModel 
+     * @param loginData
      * @returns 
      */
-    const fetchAllTargetSite = async (loginModel: LogInModel): Promise<TargetSiteModel[]> => {
-        //TODO APIの結果をts用のモデルに変換する必要あり
-        const response = await axios.get(loginModel.IPAddress + APIUrl.FETCH_ALL_SITE_ID);
-        const json: any = response?.data;
-        if (json?.return_code === 0) {
-            let list: TargetSiteModel[] = [];
-            for (let target_site in json?.target_site_list) {
-                list.push({
-                    SiteId: Number.parseInt(target_site?.site_id);
-                })
-            }
-
-        } else {
-            return [];
-        }
+    const fetchAllTargetSite = async (loginData: LogInData): Promise<FetchAllTargetSiteResponse> => {
+        const response: FetchAllTargetSiteResponse = (await axios.get<FetchAllTargetSiteResponse>(APIUrl.FETCH_ALL_SITE_ID))?.data;
+        return response;
     };
 
     /**
      * ターゲットサイトの初期画像を送信する
-     * @param loginModel 
+     * @param loginData
      * @param imageStr base64形式のターゲットサイトの画像
+     * @param fileName
      * @returns サイトのid
      */
-    const uploadInitialTargetSiteImage = async (loginModel: LogInModel, imageStr: string): Promise<TargetSiteModel> => {
-        const response = await axios.post(loginModel.IPAddress, base64ToFile(imageStr, "sample.png"));
-        const json: any = response.data;
+    const uploadInitialTargetSiteImage = async (loginData: LogInData, imageStr: string, fileName: string): Promise<UploadOriginalTargetSiteResponse> => {
+        const params: FormData = new FormData();
+        params.append("file", base64ToFile(imageStr, fileName));
+        const response: UploadOriginalTargetSiteResponse = (await axios.post(APIUrl.UPLOAD_ORIGINAL_TARGET_SITE,
+            params, {
+            headers: {
+                "content-type": "multipart/form-data"
+            }
+        }))?.data;
 
-        return { SiteId: 5 };
+        return response;
     };
 
     /**
      * 射撃後のターゲットサイトの画像を送信する
-     * @param loginModek 
-     * @param siteId 
+     * @param loginData
+     * @param targetSite
      * @param imageStr 
      */
-    const uploadShootedTargetSiteImage = async (loginModel: LogInModel, targetSite: TargetSiteModel, imageStr: string) => {
-        const response = await axios.post(loginModel.IPAddress, { "data": targetSite.SiteId, "image": imageStr });
+    const shootTargetSite = async (loginData: LogInData, targetSite: TargetSiteData, imageStr: string) => {
+        const response = await axios.post(APIUrl.SHOOT_TARGET_SITE, { "data": targetSite.site_id, "image": imageStr });
         const json: any = response.data;
     }
 
-    return { fetchAllTargetSite, uploadInitialTargetSiteImage, uploadShootedTargetSiteImage };
+
+    const createTargetSiteModel = (site_id: number): TargetSiteData => {
+        return {
+            site_id: site_id,
+            img_path: "",
+            hit_img_path: "",
+            trim_x: 0,
+            trim_y: 0,
+            trim_w: 0,
+            trim_h: 0,
+            created_at: "",
+            updated_at: "",
+        }
+    }
+
+    return { fetchAllTargetSite, uploadInitialTargetSiteImage, shootTargetSite, createTargetSiteModel };
 }

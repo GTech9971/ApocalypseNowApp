@@ -17,48 +17,50 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
-  useIonAlert
 } from '@ionic/react';
 import './Home.scss';
 
 import headerlogo from "../../images/ap2n-header.png";
 import { useRecoilState } from 'recoil';
-import { logInModelState } from '../..//atoms/LogInModel.state';
-import { LogInModel } from '../../models/LogIn.model';
+
 import { AuthService } from '../../services/Auth.service';
 import { RouteComponentProps } from 'react-router';
+import { LogInData } from '../../data/LogIn.data';
+import { logInDataState } from '../../states/LogIn.data.state';
+import { BaseResponse, ReturnCode } from '../../data/Base.response';
+import { ErrorAlertService } from '../../services/ErrorAlert.service';
 
 const Home: React.FC<RouteComponentProps> = (props) => {
 
-  const [loginModel, setLogInModel] = useRecoilState(logInModelState);
+  const [loginData, setLogInData] = useRecoilState(logInDataState);
 
   /** IPAddressの入力 */
   const onChangeIpAddressText = (e: InputChangeEventDetail) => {
     if (!e.value) { return; }
-    const logInModel: LogInModel = { IPAddress: e.value as string };
-    setLogInModel(logInModel);
-    console.log(e.value);
+    const logInData: LogInData = { IPAddress: e.value as string };
+    setLogInData(logInData);
   }
 
   const { checkAPIAddress } = AuthService();
+  const { showAlert, showErrorAlert } = ErrorAlertService();
 
   /** ログインボタン押下時 */
-  const [presentAlert] = useIonAlert();
   const onClickLogInBtn = async () => {
-    const result: boolean = await checkAPIAddress(loginModel);
+    try {
+      const response: BaseResponse = await checkAPIAddress(loginData);
 
-    if (result) {
-      props.history.push("/CameraUpload");
-    } else {
-      await presentAlert({
-        header: '接続エラー',
-        subHeader: "APIサーバーとの接続に失敗 " + loginModel?.IPAddress,
-        message: 'IPAddressに誤りがないか、APIサーバーが起動しているか確認してください。'
-      });
+      if (response.return_code === ReturnCode.Success) {
+        props.history.push("/CameraUpload");
+      } else {
+        await showAlert(response, "APIサーバーとの接続に失敗 ");
+      }
+    } catch (e: unknown) {
+      await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
     }
+
   }
 
-  const disableBtn: boolean = loginModel?.IPAddress === undefined;
+  const disableBtn: boolean = false;
 
   return (
     <IonPage>
@@ -92,8 +94,8 @@ const Home: React.FC<RouteComponentProps> = (props) => {
 
           <IonRow>
             <IonItem>
-              <IonLabel position='stacked'>API Server IPAddress:Port</IonLabel>
-              <IonInput onIonChange={e => { onChangeIpAddressText(e.detail) }} type='text' placeholder='127.0.0.1:8000'></IonInput>
+              {/* <IonLabel position='stacked'>API Server IPAddress:Port</IonLabel>
+              <IonInput onIonChange={e => { onChangeIpAddressText(e.detail) }} type='text' placeholder='127.0.0.1:8000'></IonInput> */}
             </IonItem>
           </IonRow>
 

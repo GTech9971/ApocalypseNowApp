@@ -11,6 +11,7 @@ import {
     IonSelectOption,
     IonTitle,
     IonToolbar,
+    useIonAlert,
 } from '@ionic/react';
 import { cameraOutline } from "ionicons/icons";
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,14 +19,18 @@ import './CameraUpload.scss';
 import Webcam from "react-webcam";
 import { TargetSitesService } from '../../services/TargetSites.service';
 import { useRecoilState } from 'recoil';
-import { logInModelState } from '../../atoms/LogInModel.state';
-import { TargetSiteModel } from '../../models/TargetSite.model';
+import { logInDataState } from '../../states/LogIn.data.state';
+import { TargetSiteData } from '../../data/TargetSite.data';
+import { FetchAllTargetSiteResponse } from '../../data/FetchAllTargetSite.response';
+import { ReturnCode } from '../../data/Base.response';
+import { UploadOriginalTargetSiteResponse } from '../../data/UploadOriginalTargetSite.response';
+import { ErrorAlertService } from '../../services/ErrorAlert.service';
 
 const CameraUpload: React.FC = () => {
 
-    const [logInModel, setLogInModel] = useRecoilState(logInModelState);
-    const [targetSiteList, setTargetSiteList] = useState<TargetSiteModel[]>([]);
-    const [selectTargetSite, setSelectTargetSite] = useState<TargetSiteModel>();
+    const [logInData, setlogInData] = useRecoilState(logInDataState);
+    const [targetSiteList, setTargetSiteList] = useState<TargetSiteData[]>([]);
+    const [selectTargetSite, setSelectTargetSite] = useState<TargetSiteData>();
 
     const videoConstraints: MediaTrackConstraints = {
         width: 720,
@@ -33,15 +38,44 @@ const CameraUpload: React.FC = () => {
         facingMode: "user",
     };
     const webcamRef = useRef<Webcam>(null);
-    const { fetchAllTargetSite, uploadInitialTargetSiteImage, uploadShootedTargetSiteImage } = TargetSitesService();
+    const { fetchAllTargetSite, uploadInitialTargetSiteImage, shootTargetSite, createTargetSiteModel } = TargetSitesService();
+    const { showAlert, showErrorAlert } = ErrorAlertService();
+
 
     /** 初回起動時にTargetSiteを取得する */
     useEffect(() => {
         (async () => {
-            const siteList: TargetSiteModel[] = await fetchAllTargetSite(logInModel);
-            setTargetSiteList(siteList);
+            try {
+                const response: FetchAllTargetSiteResponse = await fetchAllTargetSite(logInData);
+                if (response.return_code === ReturnCode.Success) {
+                    setTargetSiteList(response.target_site_list);
+                } else {
+                    await showAlert(response, undefined);
+                }
+            } catch (e: unknown) {
+                await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
+            }
         })();
     }, []);
+
+    /**
+     * 初回画像のアップロード
+     * @param imageSrc 
+     * @param fileName 
+     */
+    const uploadInitialImage = async (imageSrc: string, fileName: string) => {
+        try {
+            const response: UploadOriginalTargetSiteResponse = await uploadInitialTargetSiteImage(logInData, imageSrc, fileName);
+            if (response.return_code === ReturnCode.Success) {
+                setSelectTargetSite(response.target_site);
+                setTargetSiteList(([...targetSiteList, response.target_site]));
+            } else {
+                await showAlert(response, undefined);
+            }
+        } catch (e: unknown) {
+            await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
+        }
+    }
 
     /** 写真撮影時のイベント */
     const onClickcCaptureBtn = useCallback(async () => {
@@ -50,14 +84,10 @@ const CameraUpload: React.FC = () => {
 
         /** 射撃後の画像アップ */
         if (selectTargetSite) {
-            await uploadShootedTargetSiteImage(logInModel, selectTargetSite, imageSrc);
+            //await uploadShootedTargetSiteImage(loginData, selectTargetSite, imageSrc);
         } else { /** 初回アップロード時 */
-            const site: TargetSiteModel = await uploadInitialTargetSiteImage(logInModel, imageSrc);
-            // 結果のsiteidを選択ずみにする
-            setSelectTargetSite(site);
-            // idリストを更新する
-            const siteList: TargetSiteModel[] = await fetchAllTargetSite(logInModel);
-            setTargetSiteList(siteList);
+            const fileName: string = "";
+            await uploadInitialImage(imageSrc, fileName);
         }
     }, [webcamRef]);
 
@@ -70,11 +100,11 @@ const CameraUpload: React.FC = () => {
                     </IonButtons>
                     <IonTitle >ap2n</IonTitle>
                     <IonSelect slot='end' placeholder='SiteIdを選択'
-                        onIonChange={e => { setSelectTargetSite({ SiteId: e.detail.value }) }}>
+                        onIonChange={e => { setSelectTargetSite(createTargetSiteModel(Number.parseInt(e.detail.value))) }}>
                         {targetSiteList.map((data, index) => {
                             return (
                                 <IonSelectOption key={index} value={data}>
-                                    {data.SiteId}
+                                    {data.site_id}
                                 </IonSelectOption>
                             )
                         })}
