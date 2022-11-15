@@ -2,6 +2,7 @@ import axios from "axios";
 import { APIUrl } from "../consts/APIUrl.const";
 import { FetchAllTargetSiteResponse } from "../data/FetchAllTargetSite.response";
 import { LogInData } from "../data/LogIn.data";
+import { ShootTargetSiteResponse } from "../data/ShootTargetSite.response";
 import { TargetSiteData } from "../data/TargetSite.data";
 import { UploadOriginalTargetSiteResponse } from "../data/UploadOriginalTargetSite.response";
 
@@ -12,7 +13,8 @@ import { UploadOriginalTargetSiteResponse } from "../data/UploadOriginalTargetSi
 export const TargetSitesService = () => {
 
     const base64ToFile = (base64Str: string, name: string): File => {
-        let bin: string = atob(base64Str.replace("/^.*,/", ''));
+        base64Str = base64Str.split("base64,")[1];
+        let bin: string = atob(base64Str);
         let buffer: Uint8Array = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) {
             buffer[i] = bin.charCodeAt(i);
@@ -41,12 +43,11 @@ export const TargetSitesService = () => {
     const uploadInitialTargetSiteImage = async (loginData: LogInData, imageStr: string, fileName: string): Promise<UploadOriginalTargetSiteResponse> => {
         const params: FormData = new FormData();
         params.append("file", base64ToFile(imageStr, fileName));
-        const response: UploadOriginalTargetSiteResponse = (await axios.post(APIUrl.UPLOAD_ORIGINAL_TARGET_SITE,
-            params, {
-            headers: {
-                "content-type": "multipart/form-data"
-            }
-        }))?.data;
+        // headersのcontent-typeの指定は不要。ライブラリが勝手にいい感じに設定してくれる
+        const response: UploadOriginalTargetSiteResponse = (await axios.post<UploadOriginalTargetSiteResponse>(
+            APIUrl.UPLOAD_ORIGINAL_TARGET_SITE,
+            params,
+        ))?.data;
 
         return response;
     };
@@ -56,10 +57,17 @@ export const TargetSitesService = () => {
      * @param loginData
      * @param targetSite
      * @param imageStr 
-     */
-    const shootTargetSite = async (loginData: LogInData, targetSite: TargetSiteData, imageStr: string) => {
-        const response = await axios.post(APIUrl.SHOOT_TARGET_SITE, { "data": targetSite.site_id, "image": imageStr });
-        const json: any = response.data;
+    */
+    const shootTargetSite = async (loginData: LogInData, targetSite: TargetSiteData, imageStr: string, fileName: string): Promise<ShootTargetSiteResponse> => {
+        const params: FormData = new FormData();
+        params.append("file", base64ToFile(imageStr, fileName));
+        // headersのcontent-typeの指定は不要。ライブラリが勝手にいい感じに設定してくれる
+        const response: ShootTargetSiteResponse = (await axios.post<ShootTargetSiteResponse>(
+            APIUrl.UPLOAD_ORIGINAL_TARGET_SITE + "?site_id=" + targetSite.site_id,
+            params,
+        ))?.data;
+
+        return response;
     }
 
 

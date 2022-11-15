@@ -11,7 +11,6 @@ import {
     IonSelectOption,
     IonTitle,
     IonToolbar,
-    useIonAlert,
 } from '@ionic/react';
 import { cameraOutline } from "ionicons/icons";
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,10 +24,11 @@ import { FetchAllTargetSiteResponse } from '../../data/FetchAllTargetSite.respon
 import { ReturnCode } from '../../data/Base.response';
 import { UploadOriginalTargetSiteResponse } from '../../data/UploadOriginalTargetSite.response';
 import { ErrorAlertService } from '../../services/ErrorAlert.service';
+import { ShootTargetSiteResponse } from '../../data/ShootTargetSite.response';
 
 const CameraUpload: React.FC = () => {
 
-    const [logInData, setlogInData] = useRecoilState(logInDataState);
+    const [logInData] = useRecoilState(logInDataState);
     const [targetSiteList, setTargetSiteList] = useState<TargetSiteData[]>([]);
     const [selectTargetSite, setSelectTargetSite] = useState<TargetSiteData>();
 
@@ -77,16 +77,34 @@ const CameraUpload: React.FC = () => {
         }
     }
 
+    /**
+     * 射撃後の画像アップロード
+     * @param imageSrc 
+     * @param fileName 
+     */
+    const shootTarget = async (targetSite: TargetSiteData, imageSrc: string, fileName: string) => {
+        try {
+            const response: ShootTargetSiteResponse = await shootTargetSite(logInData, targetSite, imageSrc, fileName);
+            if (response.return_code === ReturnCode.Success) {
+                // TODO ヒットポイント座標受け取り後の処理
+            } else {
+                await showAlert(response, undefined);
+            }
+        } catch (e: unknown) {
+            await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
+        }
+    }
+
     /** 写真撮影時のイベント */
     const onClickcCaptureBtn = useCallback(async () => {
         const imageSrc: string = webcamRef.current?.getScreenshot() as string;
         if (!imageSrc) { return; }
 
         /** 射撃後の画像アップ */
+        const fileName: string = "sample.png"; //TODO
         if (selectTargetSite) {
-            //await uploadShootedTargetSiteImage(loginData, selectTargetSite, imageSrc);
+            await shootTarget(selectTargetSite, imageSrc, fileName);
         } else { /** 初回アップロード時 */
-            const fileName: string = "";
             await uploadInitialImage(imageSrc, fileName);
         }
     }, [webcamRef]);
@@ -125,7 +143,7 @@ const CameraUpload: React.FC = () => {
             </IonContent>
 
             <IonFooter>
-                <IonToolbar slot='center'>
+                <IonToolbar >
                     <IonButton size='large' expand='block' fill='outline' onClick={onClickcCaptureBtn}>
                         <IonIcon size='large' icon={cameraOutline}></IonIcon>
                     </IonButton>
