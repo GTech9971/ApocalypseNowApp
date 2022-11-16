@@ -2,15 +2,16 @@ import {
   InputChangeEventDetail,
   IonButton,
   IonCard,
+  IonCardContent,
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
+  IonCheckbox,
   IonContent,
+  IonFooter,
   IonGrid,
   IonHeader,
   IonImg,
-  IonInput,
-  IonItem,
   IonLabel,
   IonPage,
   IonRow,
@@ -29,10 +30,12 @@ import { LogInData } from '../../data/LogIn.data';
 import { logInDataState } from '../../states/LogIn.data.state';
 import { BaseResponse, ReturnCode } from '../../data/Base.response';
 import { ErrorAlertService } from '../../services/ErrorAlert.service';
+import { useState } from 'react';
 
 const Home: React.FC<RouteComponentProps> = (props) => {
 
   const [loginData, setLogInData] = useRecoilState(logInDataState);
+  const [isViewer, setIsViewer] = useState<boolean>(false);
 
   /** IPAddressの入力 */
   const onChangeIpAddressText = (e: InputChangeEventDetail) => {
@@ -50,7 +53,13 @@ const Home: React.FC<RouteComponentProps> = (props) => {
       const response: BaseResponse = await checkAPIAddress(loginData);
 
       if (response.return_code === ReturnCode.Success) {
-        props.history.push("/CameraUpload");
+        //viewer
+        if (isViewer) {
+          props.history.push("/viewer");
+        } else {
+          //uploader
+          props.history.push("/CameraUpload");
+        }
       } else {
         await showAlert(response, "APIサーバーとの接続に失敗 ");
       }
@@ -80,32 +89,38 @@ const Home: React.FC<RouteComponentProps> = (props) => {
                   LogIn
                 </IonCardTitle>
 
+                <IonCardContent>
+                  <IonCheckbox onIonChange={e => setIsViewer(e.detail.checked)}></IonCheckbox>
+                  <IonLabel position='stacked'>Viewerとしてログイン</IonLabel>
+                </IonCardContent>
+
                 <IonCardSubtitle>
                   <IonText>
-                    <p>
-                      APIサーバーのIPアドレスを入力して、LOGINボタンを押してください。APIサーバーに接続ができるか確認します。
-                    </p>
-                  </IonText>
+                    <ul>
+                      <>
+                        {isViewer && <li>Viwerとしてログインにチェックを入れると、カメラアップローダの操作側としてログインします。 </li>}
+                      </>
 
+                      <>
+                        {isViewer === false && <li>Viwerとしてログインにチェックを入れなかった場合、サイトの画像をアップロードするカメラアップローダとしてログインします。</li>}
+                      </>
+                    </ul>
+                  </IonText>
                 </IonCardSubtitle>
               </IonCardHeader>
             </IonCard>
           </IonRow>
 
-          <IonRow>
-            <IonItem>
-              {/* <IonLabel position='stacked'>API Server IPAddress:Port</IonLabel>
-              <IonInput onIonChange={e => { onChangeIpAddressText(e.detail) }} type='text' placeholder='127.0.0.1:8000'></IonInput> */}
-            </IonItem>
-          </IonRow>
-
-          <IonRow className='login-box'>
-            <IonButton expand="block" fill="outline" color={'black'} disabled={disableBtn} onClick={onClickLogInBtn}>
-              LOGIN
-            </IonButton>
-          </IonRow>
         </IonGrid>
       </IonContent>
+
+      <IonFooter>
+        <IonToolbar >
+          <IonButton expand="block" fill="outline" color={'black'} disabled={disableBtn} onClick={onClickLogInBtn}>
+            LOGIN
+          </IonButton>
+        </IonToolbar>
+      </IonFooter>
     </IonPage>
   );
 };

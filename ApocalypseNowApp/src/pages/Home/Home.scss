@@ -1,6 +1,37 @@
 ion-card{
     width: 100vw;
+    height: 70vh;
+
+    ion-card-subtitle{
+        text-transform: initial;
+    }
+
+    ion-card-content{
+        display: flex;
+    }
 }
+
+/* タブレット 縦*/
+@media screen and (min-width:768px) and (orientation: portrait) {
+    ion-img{
+        width: 100vw;
+        height: 50vh;
+    }
+}
+
+// タブレット 横
+@media screen  and (min-width:768px) and (orientation:landscape){
+    ion-card{
+        width: 100vw;
+        height: 70vh;
+    }
+
+    ion-img{
+        width: 100vw;
+        height: 50vh;
+    }
+}
+
 
 p{
     text-transform: initial;

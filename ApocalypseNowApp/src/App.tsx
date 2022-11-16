@@ -23,6 +23,7 @@ import './theme/variables.css';
 
 import Home from './pages/Home/Home';
 import CameraUpload from './pages/CameraUpload/CameraUpload';
+import Viewer from './pages/Viewer/Viewer';
 
 setupIonicReact();
 
@@ -33,6 +34,7 @@ const App: React.FC = () => (
         <Route exact path="/home" component={Home} />
         <Redirect exact from="/" to="/home" />
         <Route exact path="/CameraUpload" component={CameraUpload}></Route>
+        <Route exact path="/Viewer" component={Viewer}></Route>
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>
