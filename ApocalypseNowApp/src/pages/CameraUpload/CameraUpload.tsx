@@ -3,6 +3,8 @@ import {
     IonButton,
     IonButtons,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonFooter,
     IonHeader,
     IonIcon,
@@ -12,10 +14,10 @@ import {
     IonTitle,
     IonToolbar,
 } from '@ionic/react';
-import { cameraOutline } from "ionicons/icons";
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { camera, closeCircle, cameraReverse } from "ionicons/icons";
+import { useCallback, useEffect, useState } from 'react';
 import './CameraUpload.scss';
-import Webcam from "react-webcam";
+
 import { TargetSitesService } from '../../services/TargetSites.service';
 import { useRecoilState } from 'recoil';
 import { logInDataState } from '../../states/LogIn.data.state';
@@ -26,18 +28,26 @@ import { UploadOriginalTargetSiteResponse } from '../../data/UploadOriginalTarge
 import { ErrorAlertService } from '../../services/ErrorAlert.service';
 import { ShootTargetSiteResponse } from '../../data/ShootTargetSite.response';
 
+import { CameraPreview, CameraPreviewOptions, CameraPreviewPictureOptions } from '@capacitor-community/camera-preview';
+
+
 const CameraUpload: React.FC = () => {
 
     const [logInData] = useRecoilState(logInDataState);
     const [targetSiteList, setTargetSiteList] = useState<TargetSiteData[]>([]);
     const [selectTargetSite, setSelectTargetSite] = useState<TargetSiteData>();
 
-    const videoConstraints: MediaTrackConstraints = {
-        width: 720,
-        height: 360,
-        facingMode: "user",
+    // カメラプレビューのセットアップ
+    const [isStartCamera, setIsStartCamera] = useState<boolean>(false);
+    const cameraPreviewOptions: CameraPreviewOptions = {
+        position: 'rear',
+        height: 1920,
+        width: 1080,
+        parent: 'cameraPreview'
     };
-    const webcamRef = useRef<Webcam>(null);
+    const captureOptions: CameraPreviewPictureOptions = { quality: 90 };
+
+
     const { fetchAllTargetSite, uploadInitialTargetSiteImage, shootTargetSite, createTargetSiteModel } = TargetSitesService();
     const { showAlert, showErrorAlert } = ErrorAlertService();
 
@@ -45,16 +55,16 @@ const CameraUpload: React.FC = () => {
     /** 初回起動時にTargetSiteを取得する */
     useEffect(() => {
         (async () => {
-            try {
-                const response: FetchAllTargetSiteResponse = await fetchAllTargetSite(logInData);
-                if (response.return_code === ReturnCode.Success) {
-                    setTargetSiteList(response.target_site_list);
-                } else {
-                    await showAlert(response, undefined);
-                }
-            } catch (e: unknown) {
-                await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
-            }
+            // try {
+            //     const response: FetchAllTargetSiteResponse = await fetchAllTargetSite(logInData);
+            //     if (response.return_code === ReturnCode.Success) {
+            //         setTargetSiteList(response.target_site_list);
+            //     } else {
+            //         await showAlert(response, undefined);
+            //     }
+            // } catch (e: unknown) {
+            //     await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
+            // }
         })();
     }, []);
 
@@ -95,9 +105,23 @@ const CameraUpload: React.FC = () => {
         }
     }
 
+    /** カメラ停止 */
+    const onClickStopCameraBtn = useCallback(async () => {
+        if (isStartCamera === false) { }
+        await CameraPreview.stop();
+        setIsStartCamera(false);
+    }, []);
+
     /** 写真撮影時のイベント */
     const onClickcCaptureBtn = useCallback(async () => {
-        const imageSrc: string = webcamRef.current?.getScreenshot() as string;
+        // カメラが停止していれば開始する
+        if (isStartCamera === false) {
+            await CameraPreview.start(cameraPreviewOptions);
+            setIsStartCamera(true);
+            return;
+        }
+
+        const imageSrc: string = (await CameraPreview.capture(captureOptions))?.value;
         if (!imageSrc) { return; }
 
         /** 射撃後の画像アップ */
@@ -107,7 +131,15 @@ const CameraUpload: React.FC = () => {
         } else { /** 初回アップロード時 */
             await uploadInitialImage(imageSrc, fileName);
         }
-    }, [webcamRef]);
+    }, []);
+
+    /** カメラ反転ボタン */
+    const onClickFlipCameraBtn = useCallback(async () => {
+        if (isStartCamera === false) { return; }
+        await CameraPreview.flip();
+    }, []);
+
+
 
     return (
         <IonPage>
@@ -116,7 +148,9 @@ const CameraUpload: React.FC = () => {
                     <IonButtons slot="start">
                         <IonBackButton />
                     </IonButtons>
+
                     <IonTitle >ap2n</IonTitle>
+
                     <IonSelect slot='end' placeholder='SiteIdを選択'
                         onIonChange={e => { setSelectTargetSite(createTargetSiteModel(Number.parseInt(e.detail.value))) }}>
                         {targetSiteList.map((data, index) => {
@@ -130,23 +164,37 @@ const CameraUpload: React.FC = () => {
                 </IonToolbar>
             </IonHeader>
             <IonContent fullscreen>
-                <div>
-                    <Webcam
-                        audio={false}
-                        // width={540}
-                        // height={360}
-                        ref={webcamRef}
-                        screenshotFormat="image/png"
-                        videoConstraints={videoConstraints}
-                    />
+                <div id='cameraPreview' className='cameraPreview'>
                 </div>
+
+                {/* カメラ停止 */}
+                <IonFab vertical='bottom' horizontal='start' slot='fixed'>
+                    <IonFabButton onClick={onClickStopCameraBtn}>
+                        <IonIcon icon={closeCircle} ></IonIcon>
+                    </IonFabButton>
+                </IonFab>
+
+
+                {/* キャプチャ & カメラ起動 */}
+                <IonFab vertical='bottom' horizontal='center' slot='fixed'>
+                    <IonFabButton onClick={onClickcCaptureBtn}>
+                        <IonIcon icon={camera} ></IonIcon>
+                    </IonFabButton>
+                </IonFab>
+
+
+                {/* カメラ反転 */}
+                <IonFab vertical='bottom' horizontal='end' slot='fixed'>
+                    <IonFabButton onClick={onClickFlipCameraBtn}>
+                        <IonIcon icon={cameraReverse} ></IonIcon>
+                    </IonFabButton>
+                </IonFab>
+
             </IonContent>
 
             <IonFooter>
                 <IonToolbar >
-                    <IonButton size='large' expand='block' fill='outline' onClick={onClickcCaptureBtn}>
-                        <IonIcon size='large' icon={cameraOutline}></IonIcon>
-                    </IonButton>
+
                 </IonToolbar>
             </IonFooter>
         </IonPage>
