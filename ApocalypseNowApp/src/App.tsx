@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { BrowserRouter, Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 
@@ -29,14 +29,22 @@ setupIonicReact();
 
 const App: React.FC = () => (
   <IonApp>
-    <IonReactRouter>
+    {/* ionicのrouterは再レンダリングしまくるので使わない */}
+    {/* <IonReactRouter>
       <IonRouterOutlet>
         <Route exact path="/home" component={Home} />
         <Redirect exact from="/" to="/home" />
         <Route exact path="/CameraUpload" component={CameraUpload}></Route>
         <Route exact path="/Viewer" component={Viewer}></Route>
       </IonRouterOutlet>
-    </IonReactRouter>
+    </IonReactRouter> */}
+
+    <BrowserRouter>
+      <Route exact path="/home" component={Home} />
+      <Redirect exact from="/" to="/home" />
+      <Route exact path="/CameraUpload" component={CameraUpload}></Route>
+      <Route exact path="/Viewer" component={Viewer}></Route>
+    </BrowserRouter>
   </IonApp>
 );
 

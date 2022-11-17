@@ -13,7 +13,6 @@ import { UploadOriginalTargetSiteResponse } from "../data/UploadOriginalTargetSi
 export const TargetSitesService = () => {
 
     const base64ToFile = (base64Str: string, name: string): File => {
-        base64Str = base64Str.split("base64,")[1];
         let bin: string = atob(base64Str);
         let buffer: Uint8Array = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) {
@@ -55,15 +54,15 @@ export const TargetSitesService = () => {
     /**
      * 射撃後のターゲットサイトの画像を送信する
      * @param loginData
-     * @param targetSite
+     * @param site_id
      * @param imageStr 
     */
-    const shootTargetSite = async (loginData: LogInData, targetSite: TargetSiteData, imageStr: string, fileName: string): Promise<ShootTargetSiteResponse> => {
+    const shootTargetSite = async (loginData: LogInData, siteId: number, imageStr: string, fileName: string): Promise<ShootTargetSiteResponse> => {
         const params: FormData = new FormData();
         params.append("file", base64ToFile(imageStr, fileName));
         // headersのcontent-typeの指定は不要。ライブラリが勝手にいい感じに設定してくれる
         const response: ShootTargetSiteResponse = (await axios.post<ShootTargetSiteResponse>(
-            APIUrl.UPLOAD_ORIGINAL_TARGET_SITE + "?site_id=" + targetSite.site_id,
+            APIUrl.UPLOAD_ORIGINAL_TARGET_SITE + "?site_id=" + siteId,
             params,
         ))?.data;
 

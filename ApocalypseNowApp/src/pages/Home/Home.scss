@@ -1,6 +1,6 @@
 ion-card{
     width: 100vw;
-    height: 70vh;
+    height: 75vh;
 
     ion-card-subtitle{
         text-transform: initial;
@@ -9,6 +9,10 @@ ion-card{
     ion-card-content{
         display: flex;
     }
+}
+
+ion-list{
+    width: 100%;
 }
 
 /* タブレット 縦*/
@@ -23,28 +27,11 @@ ion-card{
 @media screen  and (min-width:768px) and (orientation:landscape){
     ion-card{
         width: 100vw;
-        height: 70vh;
+        height: 75vh;
     }
 
     ion-img{
         width: 100vw;
-        height: 50vh;
-    }
-}
-
-
-p{
-    text-transform: initial;
-}
-
-.login-box{
-    width: 100vw;
-    display: flex;
-    justify-content: center;
-    position: absolute;
-    top: 85%;
-    margin-top: 15px;
-    ion-button{
-        width: 80%;
+        height: 40vh;
     }
 }

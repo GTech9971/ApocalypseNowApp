@@ -12,9 +12,13 @@ import {
   IonGrid,
   IonHeader,
   IonImg,
+  IonItem,
   IonLabel,
+  IonList,
   IonPage,
   IonRow,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToolbar,
@@ -30,12 +34,37 @@ import { LogInData } from '../../data/LogIn.data';
 import { logInDataState } from '../../states/LogIn.data.state';
 import { BaseResponse, ReturnCode } from '../../data/Base.response';
 import { ErrorAlertService } from '../../services/ErrorAlert.service';
-import { useState } from 'react';
+import { memo, useEffect, useState } from 'react';
+import { FetchAllTargetSiteResponse } from '../../data/FetchAllTargetSite.response';
+import { TargetSitesService } from '../../services/TargetSites.service';
+import { TargetSiteData } from '../../data/TargetSite.data';
+import { siteIdState } from '../../states/SiteId.state';
 
 const Home: React.FC<RouteComponentProps> = (props) => {
 
   const [loginData, setLogInData] = useRecoilState(logInDataState);
   const [isViewer, setIsViewer] = useState<boolean>(false);
+
+  const [selectSiteId, setSelectSiteId] = useRecoilState(siteIdState);
+  const [targetSiteList, setTargetSiteList] = useState<TargetSiteData[]>([]);
+
+  const { checkAPIAddress } = AuthService();
+  const { fetchAllTargetSite } = TargetSitesService();
+  const { showAlert, showErrorAlert } = ErrorAlertService();
+
+  /** 初回起動時にTargetSiteを取得する */
+  useEffect(() => {
+    (async () => {
+      try {
+        const response: FetchAllTargetSiteResponse = await fetchAllTargetSite(loginData);
+        if (response.return_code === ReturnCode.Success) {
+          setTargetSiteList(response.target_site_list);
+        }
+      } catch (e: unknown) {
+        await showErrorAlert(e, "APIサーバーとの接続に失敗 ");
+      }
+    })();
+  }, []);
 
   /** IPAddressの入力 */
   const onChangeIpAddressText = (e: InputChangeEventDetail) => {
@@ -44,8 +73,14 @@ const Home: React.FC<RouteComponentProps> = (props) => {
     setLogInData(logInData);
   }
 
-  const { checkAPIAddress } = AuthService();
-  const { showAlert, showErrorAlert } = ErrorAlertService();
+  /** SiteId選択時のイベント  */
+  const onSelectTargetSite = (e: InputChangeEventDetail) => {
+    if (!e.value) { return; }
+    const siteId: number = Number.parseInt(e.value);
+    setSelectSiteId(siteId);
+  }
+
+
 
   /** ログインボタン押下時 */
   const onClickLogInBtn = async () => {
@@ -69,8 +104,6 @@ const Home: React.FC<RouteComponentProps> = (props) => {
 
   }
 
-  const disableBtn: boolean = false;
-
   return (
     <IonPage>
       <IonHeader>
@@ -90,8 +123,26 @@ const Home: React.FC<RouteComponentProps> = (props) => {
                 </IonCardTitle>
 
                 <IonCardContent>
-                  <IonCheckbox onIonChange={e => setIsViewer(e.detail.checked)}></IonCheckbox>
-                  <IonLabel position='stacked'>Viewerとしてログイン</IonLabel>
+
+                  <IonList>
+                    <IonItem>
+                      <IonLabel>Viewerとしてログイン</IonLabel>
+                      <IonCheckbox onIonChange={e => setIsViewer(e.detail.checked)}></IonCheckbox>
+                    </IonItem>
+
+                    <IonItem>
+                      <IonLabel>SiteIDを選択</IonLabel>
+                      <IonSelect onIonChange={e => onSelectTargetSite(e.detail.value)}>
+                        {targetSiteList.map((data, index) => {
+                          return (
+                            <IonSelectOption key={index} value={data}>
+                              {data.site_id}
+                            </IonSelectOption>
+                          )
+                        })}
+                      </IonSelect>
+                    </IonItem>
+                  </IonList>
                 </IonCardContent>
 
                 <IonCardSubtitle>
@@ -100,7 +151,6 @@ const Home: React.FC<RouteComponentProps> = (props) => {
                       <>
                         {isViewer && <li>Viwerとしてログインにチェックを入れると、カメラアップローダの操作側としてログインします。 </li>}
                       </>
-
                       <>
                         {isViewer === false && <li>Viwerとしてログインにチェックを入れなかった場合、サイトの画像をアップロードするカメラアップローダとしてログインします。</li>}
                       </>
@@ -116,13 +166,13 @@ const Home: React.FC<RouteComponentProps> = (props) => {
 
       <IonFooter>
         <IonToolbar >
-          <IonButton expand="block" fill="outline" color={'black'} disabled={disableBtn} onClick={onClickLogInBtn}>
+          <IonButton expand="block" fill="outline" color={'black'} onClick={onClickLogInBtn}>
             LOGIN
           </IonButton>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </IonPage >
   );
 };
 
-export default Home;
+export default memo(Home);
