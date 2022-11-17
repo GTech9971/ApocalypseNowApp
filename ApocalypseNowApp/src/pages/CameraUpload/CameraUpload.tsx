@@ -18,13 +18,14 @@ import './CameraUpload.scss';
 import { TargetSitesService } from '../../services/TargetSites.service';
 import { useRecoilState } from 'recoil';
 import { logInDataState } from '../../states/LogIn.data.state';
-import { ReturnCode } from '../../data/Base.response';
+import { BaseResponse, ReturnCode } from '../../data/Base.response';
 import { UploadOriginalTargetSiteResponse } from '../../data/UploadOriginalTargetSite.response';
 import { ErrorAlertService } from '../../services/ErrorAlert.service';
 import { ShootTargetSiteResponse } from '../../data/ShootTargetSite.response';
 
 import { CameraPreview, CameraPreviewOptions, CameraPreviewPictureOptions } from '@capacitor-community/camera-preview';
 import { siteIdState } from '../../states/SiteId.state';
+import { PreviewImageService } from '../../services/PreviewImage.service';
 
 
 const CameraUpload: React.FC = () => {
@@ -42,6 +43,7 @@ const CameraUpload: React.FC = () => {
     const captureOptions: CameraPreviewPictureOptions = { quality: 90 };
 
     const { uploadInitialTargetSiteImage, shootTargetSite } = TargetSitesService();
+    const { uploadPreviewImage } = PreviewImageService();
     const { showAlert, showErrorAlert } = ErrorAlertService();
 
     useEffect(() => {
@@ -50,6 +52,18 @@ const CameraUpload: React.FC = () => {
             await CameraPreview.start(cameraPreviewOptions);
             setIsStartCamera(true);
         })()
+
+        /** 2秒ごとにプレビュー画像をアップロード */
+        const interval = setInterval(async () => {
+            const previewOptions: CameraPreviewPictureOptions = { quality: 50 };
+            const imageSrc: string = (await CameraPreview.capture(previewOptions))?.value;
+            if (!imageSrc) { return; }
+
+            /** 射撃後の画像アップ */
+            const response: BaseResponse = await uploadPreviewImage(imageSrc);
+        }, 1000 * 2);
+        //クリーンアップ
+        return () => { clearInterval(interval); };
     }, []);
 
     /**

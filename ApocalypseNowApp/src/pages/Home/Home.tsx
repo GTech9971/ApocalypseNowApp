@@ -135,7 +135,7 @@ const Home: React.FC<RouteComponentProps> = (props) => {
                       <IonSelect onIonChange={e => onSelectTargetSite(e.detail.value)}>
                         {targetSiteList.map((data, index) => {
                           return (
-                            <IonSelectOption key={index} value={data}>
+                            <IonSelectOption key={index} value={data.site_id}>
                               {data.site_id}
                             </IonSelectOption>
                           )
