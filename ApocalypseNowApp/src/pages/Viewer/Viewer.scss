@@ -1,0 +1,11 @@
+.root{
+    height: 100%;
+}
+
+.preview-box{
+    display: flex;
+    justify-content: center;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
