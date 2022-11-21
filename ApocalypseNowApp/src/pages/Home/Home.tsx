@@ -39,6 +39,7 @@ import { FetchAllTargetSiteResponse } from '../../data/FetchAllTargetSite.respon
 import { TargetSitesService } from '../../services/TargetSites.service';
 import { TargetSiteData } from '../../data/TargetSite.data';
 import { siteIdState } from '../../states/SiteId.state';
+import { CommandService } from '../../services/Command.service';
 
 const Home: React.FC<RouteComponentProps> = (props) => {
 
@@ -51,6 +52,8 @@ const Home: React.FC<RouteComponentProps> = (props) => {
   const { checkAPIAddress } = AuthService();
   const { fetchAllTargetSite } = TargetSitesService();
   const { showAlert, showErrorAlert } = ErrorAlertService();
+
+  const { message, sendMessage } = CommandService();
 
   /** 初回起動時にTargetSiteを取得する */
   useEffect(() => {
@@ -85,6 +88,8 @@ const Home: React.FC<RouteComponentProps> = (props) => {
   /** ログインボタン押下時 */
   const onClickLogInBtn = async () => {
     try {
+      sendMessage("hello!!");
+      return;
       const response: BaseResponse = await checkAPIAddress(loginData);
 
       if (response.return_code === ReturnCode.Success) {
