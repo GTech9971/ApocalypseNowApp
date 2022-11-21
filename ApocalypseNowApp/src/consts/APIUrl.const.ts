@@ -13,4 +13,10 @@ export class APIUrl {
     public static readonly UPLOAD_ORIGINAL_TARGET_SITE: string = "/upload_original_target_site";
     /** 射撃後の画像アップロードAPI */
     public static readonly SHOOT_TARGET_SITE: string = "/shoot_target_site";
+    /** コマンド実行API */
+    public static readonly DO_COMMAND: string = "/do_command";
+    /** コマンド取得API */
+    public static readonly FETCH_COMMANDS: string = "/fetch_commands";
+    /** コマンド完了API */
+    public static readonly DONE_COMMAND: string = "/done_command";
 }
